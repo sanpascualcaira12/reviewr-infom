@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITINFOM Reviewer</title>
+    <style>
+        :root {
+            --primary: #4257b2;
+            --primary-hover: #384aa3;
+            --bg-color: #f6f7fb;
+            --text-main: #333333;
+            --text-light: #707070;
+            --white: #ffffff;
+            --border: #ededed;
+            --correct: #23b26d;
+            --correct-bg: #e6f6ee;
+            --incorrect: #ff7b72;
+            --incorrect-bg: #ffebe9;
+            --info-bg: #eef1ff;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: var(--font-family);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--white);
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            margin: 0 0 5px 0;
+            font-size: 22px;
+            color: var(--primary);
+        }
+
+        header p {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* Controls */
+        .controls-top {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nav-buttons,
+        .mode-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            background-color: var(--white);
+            color: var(--text-main);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            flex: 1 1 auto;
+            text-align: center;
+        }
+
+        button:hover {
+            background-color: #f0f0f0;
+        }
+
+        button.active {
+            background-color: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            height: 6px;
+            margin: 10px 0 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        /* Flashcard Styling */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 350px;
+            margin-bottom: 20px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateX(180deg);
+        }
+
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+            flex-direction: column;
+            line-height: 1.4;
+        }
+
+        .flashcard-front {
+            color: var(--text-main);
+        }
+
+        .flashcard-back {
+            background-color: var(--primary);
+            color: var(--white);
+            transform: rotateX(180deg);
+        }
+
+        .topic-label {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-light);
+            background: var(--border);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .flashcard-back .topic-label {
+            color: var(--white);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .flashcard-hint {
+            position: absolute;
+            bottom: 15px;
+            font-size: 12px;
+            color: #aaaaaa;
+        }
+
+        .flashcard-back .flashcard-hint {
+            color: #d1d8ff;
+        }
+
+        .card-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .card-controls button {
+            padding: 15px;
+            font-size: 16px;
+            flex: 1;
+        }
+
+        /* Quiz Styling */
+        .quiz-container {
+            display: none;
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+        }
+
+        .quiz-question {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background-color: var(--white);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.3;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+            background-color: #f8f9ff;
+        }
+
+        .quiz-option.correct {
+            background-color: var(--correct-bg);
+            border-color: var(--correct);
+            color: #1a8751;
+            font-weight: bold;
+        }
+
+        .quiz-option.wrong {
+            background-color: var(--incorrect-bg);
+            border-color: var(--incorrect);
+            color: #cb2431;
+        }
+
+        .quiz-option.disabled {
+            pointer-events: none;
+        }
+
+        /* Identification Quiz Input */
+.quiz-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+#quiz-answer-input {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#quiz-answer-input:focus {
+    border-color: var(--primary);
+}
+
+#quiz-answer-input.correct-input {
+    border-color: var(--correct);
+    background-color: var(--correct-bg);
+}
+
+#quiz-answer-input.wrong-input {
+    border-color: var(--incorrect);
+    background-color: var(--incorrect-bg);
+}
+
+#quiz-submit-btn {
+    background-color: var(--primary);
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    border: none;
+}
+
+#quiz-submit-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+#quiz-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: var(--info-bg);
+            border-left: 4px solid var(--primary);
+            font-size: 15px;
+            line-height: 1.5;
+            color: #2c3e50;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .explanation-box strong {
+            color: var(--primary);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .quiz-footer {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #quiz-feedback {
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        #quiz-next-btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+        }
+
+        /* Results Screen */
+        .score-display {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .score-display h2 {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .missed-questions {
+            text-align: left;
+            margin-top: 20px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .missed-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .missed-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        @media (min-width: 768px) {
+            header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+
+            .controls-top {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .nav-buttons {
+                justify-content: flex-start;
+            }
+
+            .quiz-container {
+                padding: 40px;
+            }
+
+            .flashcard-face {
+                font-size: 24px;
+                padding: 40px;
+            }
+
+            .quiz-footer {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            #quiz-next-btn {
+                width: auto;
+            }
+
+            button {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1>ITINFOM Reviewer</h1>
+        </div>
+        <div style="font-size: 12px; color: var(--text-light); display: none;" id="desktop-hints">
+            review review
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls-top">
+            <div class="nav-buttons" id="topic-buttons">
+                <button class="active" onclick="setTopic('all')">All Lessons</button>
+                <button onclick="setTopic('l2')">50 Items</button>
+            </div>
+            <div class="mode-buttons">
+                <button class="active" id="btn-flashcards" onclick="setMode('flashcard')">Flashcards</button>
+                <button id="btn-quiz" onclick="setMode('quiz')">Practice Quiz</button>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-tracker">Loading...</div>
+
+        <!-- Flashcard UI -->
+        <div id="flashcard-view">
+            <div class="flashcard-container" onclick="flipCard()">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-face flashcard-front">
+                        <div class="topic-label" id="fc-topic-front">Topic</div>
+                        <span id="fc-question">Question</span>
+                        <span class="flashcard-hint">Tap to flip</span>
+                    </div>
+                    <div class="flashcard-face flashcard-back">
+                        <div class="topic-label" id="fc-topic-back">Topic</div>
+                        <span id="fc-answer">Answer</span>
+                        <span class="flashcard-hint">Tap to flip back</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-controls">
+                <button onclick="prevCard()">← Previous</button>
+                <button onclick="nextCard()">Next →</button>
+            </div>
+        </div>
+
+        <!-- Quiz UI -->
+        <div id="quiz-view" class="quiz-container">
+            <div id="quiz-active-area">
+                <div class="topic-label" id="quiz-topic-label"
+                    style="display:inline-block; position:static; margin-bottom:15px;">Topic</div>
+                <div class="quiz-question" id="quiz-question">Question?</div>
+                <div class="quiz-input-area">
+                    <input type="text" id="quiz-answer-input" placeholder="Type your answer here..." autocomplete="off">
+                    <button id="quiz-submit-btn" onclick="submitQuizAnswer()">
+                        Submit Answer
+                    </button>          </div>
+
+                <div class="explanation-box" id="explanation-box">
+                    <strong>Explanation:</strong> <span id="exp-text"></span>
+                </div>
+
+                <div class="quiz-footer">
+                    <div id="quiz-feedback"></div>
+                    <button id="quiz-next-btn" onclick="nextQuizQuestion()" style="display: none;">Next
+                        Question</button>
+                </div>
+            </div>
+
+            <!-- Quiz Results -->
+            <div id="quiz-results" class="score-display" style="display:none;">
+                <h2>Quiz Complete!</h2>
+                <p id="final-score-text" style="font-size: 18px; font-weight: bold;"></p>
+                <div id="missed-container" class="missed-questions" style="display:none;">
+                    <h3 style="margin-top:0; color:var(--incorrect);">Review These Topics:</h3>
+                    <div id="missed-list"></div>
+                </div>
+                <button onclick="startQuiz()" style="margin-top:20px; width:100%; padding:15px; font-size:18px;">Restart
+                    Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 50 items identification
+    const qBank = [
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college forms a committee composed of senior administrators, IT personnel, department heads, data owners, security personnel, and system users before starting its information strategic plan. What stage of plan development is being demonstrated?",
+            a: "Establish the Planning Team",
+            exp: "The planning team guides the strategic planning process and coordinates planning activities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university's planning team first reviews its mission, vision, and strategic goals before discussing new information systems. Why is this step necessary?",
+            a: "Review Mission, Vision, and Strategic Goals",
+            exp: "It is necessary because it gives clear direction to the strategic planning process."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company inventories its existing systems, information resources, processes, technology, skills, policies, costs, risks, and performance before deciding what to improve. What stage is being performed?",
+            a: "Determine the Current Strategic Position",
+            exp: "This identifies the organization's current systems, resources, technology, capabilities, costs, risks, and performance."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A school interviews faculty, staff, students, and administrators to determine their actual information requirements and operational problems. What stage of information strategic planning is illustrated?",
+            a: "Gather Stakeholders Input",
+            exp: "Stakeholder input helps identify actual information requirements, needs, and operational problems."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A government office examines its internal strengths and weaknesses and its external opportunities and threats before establishing information priorities. Which method is being used?",
+            a: "SWOT Analysis",
+            exp: "SWOT analyzes Strengths, Weaknesses, Opportunities, and Threats."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A hospital compares its existing information capabilities with the capabilities it needs for its desired future environment. What planning method is most appropriate?",
+            a: "Gap Analysis",
+            exp: "Gap analysis identifies the difference between the current capabilities and the desired future capabilities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university discovers that its current student records are stored in separate spreadsheets, while its desired future state requires an integrated information environment. What method would best identify this difference?",
+            a: "Gap Analysis",
+            exp: "Gap analysis identifies the difference between the current state and the desired future state."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college asks each department what information it needs to perform daily operations and make decisions. What planning method is being used?",
+            a: "Needs Assessment",
+            exp: "Needs assessment identifies the information required by departments for operations and decision-making."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company studies relationships among its business processes, information, data, and information systems before redesigning its information environment. Which method is most appropriate?",
+            a: "Business Systems Planning",
+            exp: "Business Systems Planning examines the relationships among business processes, information, data, and systems."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A school identifies the few conditions that must perform successfully for its strategic objectives to be achieved. Which planning method is being applied?",
+            a: "Critical Success Factors",
+            exp: "Critical Success Factors are the conditions that must be successful for strategic objectives to be achieved."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university evaluates its strategy from financial, customer, internal-process, and learning-and-growth perspectives. Which method is being used?",
+            a: "Balanced Scorecard",
+            exp: "The Balanced Scorecard evaluates performance using financial, customer, internal-process, and learning-and-growth perspectives."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company creates a visual representation showing how strategic objectives are connected and how one objective supports another. What method is illustrated?",
+            a: "Strategy Mapping",
+            exp: "A strategy map visually shows how strategic objectives are connected and support one another."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A government agency evaluates proposed and existing systems according to business value, cost, risk, technical condition, and strategic importance. Which method should it use?",
+            a: "Portfolio Analysis",
+            exp: "Portfolio analysis evaluates systems and initiatives using factors such as value, cost, risk, technical condition, and strategic importance."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college compares its performance and information practices with those of peer institutions and recognized standards. What method is being used?",
+            a: "Benchmarking",
+            exp: "Benchmarking compares performance and practices with other organizations or recognized standards."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "An organization develops several possible future situations involving technology, regulation, and cybersecurity and prepares responses for each. Which method is illustrated?",
+            a: "Scenario Planning",
+            exp: "Scenario planning considers possible future situations and prepares the organization for uncertainty."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A planning team conducts one-on-one discussions with managers, employees, IT personnel, users, and data owners to collect detailed information. What method is being used?",
+            a: "Interviews",
+            exp: "Interviews collect detailed information through one-on-one discussions."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university distributes a structured questionnaire to hundreds of students and employees to gather information requirements. Which method is most appropriate?",
+            a: "Surveys",
+            exp: "Surveys gather information from many respondents using a structured questionnaire."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company brings representatives from different departments together to identify problems, requirements, priorities, and strategies collaboratively. What method is being used?",
+            a: "Workshops",
+            exp: "Workshops bring stakeholders together for collaborative discussions and activities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A hospital examines its workflows to identify opportunities for automation, integration, simplification, standardization, and control. Which method is being applied?",
+            a: "Business Process Analysis",
+            exp: "Business Process Analysis examines workflows to identify problems and opportunities for improvement."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A school has many proposed information projects but limited resources. The planning team evaluates their value, urgency, cost, risk, dependencies, and expected benefits before deciding which should happen first. What planning activity is being performed?",
+            a: "Prioritize and Sequence Initiatives",
+            exp: "This activity determines which initiatives should be done first based on value, urgency, cost, risk, dependencies, and expected benefits."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university wants to ensure that every information initiative directly supports its mission, vision, goals, and organizational priorities. Which principle of information strategic planning is being applied?",
+            a: "Strategic Alignment",
+            exp: "Strategic alignment ensures that information initiatives directly support organizational goals and priorities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college proposes a new information system because it is popular, but the planning team rejects it because it does not contribute to the organization's purpose. Which planning principle supports this decision?",
+            a: "Strategic Alignment",
+            exp: "Strategic alignment ensures that information systems support the organization's purpose, goals, and priorities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company evaluates whether an information initiative will improve decision-making, efficiency, service quality, revenue, risk reduction, or cost control. Which principle is being considered?",
+            a: "Organizational Value",
+            exp: "Organizational value refers to the benefits that information initiatives provide to the organization."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university requires information to be accurate, complete, relevant, timely, consistent, reliable, and accessible. Which information strategic planning principle is illustrated?",
+            a: "Information Quality",
+            exp: "Information quality means information should be accurate, complete, relevant, timely, consistent, reliable, and accessible."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A school includes users' needs and capabilities during planning, implementation, and evaluation of a new information system. Which principle is being applied?",
+            a: "User-Centered Planning",
+            exp: "User-centered planning considers the needs and capabilities of the people who will use the system."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company integrates appropriate information across departments to reduce duplication and improve consistency. Which planning principle is demonstrated?",
+            a: "Integration",
+            exp: "Integration allows departments and systems to share appropriate information and work together."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A hospital protects sensitive information according to its sensitivity, legal requirements, risks, and intended use. Which principle is being applied?",
+            a: "Security and Privacy",
+            exp: "Security and privacy protect sensitive information and ensure that legal and organizational requirements are followed."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A growing university chooses systems and infrastructure that can support increasing workloads and future organizational expansion. Which principle is illustrated?",
+            a: "Scalability",
+            exp: "Scalability allows systems and infrastructure to support growth and increasing workloads."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A government agency revises its information strategy when regulations, technology, threats, or user requirements change. Which principle is being demonstrated?",
+            a: "Flexibility and Agility",
+            exp: "Flexibility and agility allow the organization and its systems to adapt to changing conditions."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company evaluates expected benefits against total costs, risks, and resource requirements before approving an information initiative. Which principle is being applied?",
+            a: "Cost-Effectiveness",
+            exp: "Cost-effectiveness compares expected benefits with the costs, risks, and resources required."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university includes long-term maintenance, support, upgrades, training, security, and funding in its information strategy. Which principle is being demonstrated?",
+            a: "Sustainability",
+            exp: "Sustainability ensures that systems can be maintained and supported for long-term needs."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college clearly assigns decision rights, responsibilities, policies, standards, ownership, and accountability for information management. Which principle is being applied?",
+            a: "Governance and Accountability",
+            exp: "Governance and accountability define decision rights, responsibilities, policies, standards, ownership, and accountability."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company treats information planning as a recurring cycle of planning, implementation, measurement, evaluation, and improvement. Which principle is illustrated?",
+            a: "Continuous Improvement",
+            exp: "Continuous improvement involves regularly planning, implementing, measuring, evaluating, and improving strategies and systems."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university prepares a brief section that summarizes its major information issues, objectives, strategic initiatives, expected outcomes, and resource implications. Which component of the Information Strategic Plan is this?",
+            a: "Executive Summary",
+            exp: "The executive summary provides a brief overview of the major points of the strategic plan."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college documents its mission, vision, organizational structure, services, stakeholders, and strategic priorities in its plan. Which component is being prepared?",
+            a: "Organizational Profile",
+            exp: "The organizational profile describes the organization, including its mission, vision, structure, services, stakeholders, and priorities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company documents internal capabilities and external factors that influence its information strategy. Which component of the plan does this describe?",
+            a: "Strategic Context and Environmental Analysis",
+            exp: "This component examines internal capabilities and external factors that influence the information strategy."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A school documents its existing information resources, systems, technology, processes, people, policies, costs, and risks. Which component is being developed?",
+            a: "Current-State Assessment",
+            exp: "The current-state assessment documents the organization's existing information resources, systems, technology, processes, people, policies, costs, and risks."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A government office identifies the information required for operations, management, decision-making, compliance, and strategic activities. Which component is being addressed?",
+            a: "Information Requirements",
+            exp: "Information requirements identify the information needed for operations, management, decision-making, compliance, and strategic activities."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university defines how information and data will be collected, stored, maintained, shared, protected, retained, and disposed of. Which component is this?",
+            a: "Information and Data Strategy",
+            exp: "The Information and Data Strategy defines how information and data will be managed throughout their lifecycle."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college identifies the application and system capabilities needed to support organizational processes and information requirements. Which component is being developed?",
+            a: "Information Systems Strategy",
+            exp: "The Information Systems Strategy defines the application and system capabilities needed to support organizational processes and information requirements."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company defines its infrastructure, networks, hardware, software, cloud services, platforms, integration, and technical standards. Which component is being addressed?",
+            a: "Technology Strategy",
+            exp: "The Technology Strategy defines the organization's technology, infrastructure, platforms, integration, and technical standards."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A hospital establishes controls for confidentiality, integrity, availability, privacy, access, backup, recovery, and incident response. Which component is this?",
+            a: "Security and Privacy Strategy",
+            exp: "The Security and Privacy Strategy defines controls for protecting information and managing security and privacy risks."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university defines policies, decision rights, ownership, roles, standards, architecture principles, and accountability for information decisions. Which component is being developed?",
+            a: "Governance Strategy",
+            exp: "The Governance Strategy defines policies, decision rights, ownership, roles, standards, principles, and accountability."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A school identifies staffing, competencies, training, professional development, and change-management requirements for its information initiatives. Which component is being addressed?",
+            a: "People and Skills Strategy",
+            exp: "The People and Skills Strategy identifies staffing, competencies, training, professional development, and change-management needs."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A company lists proposed information projects together with their strategic rationale, priorities, dependencies, costs, risks, and expected benefits. Which component is this?",
+            a: "Strategic Initiatives and Project Portfolio",
+            exp: "This component organizes proposed projects and initiatives according to their rationale, priorities, dependencies, costs, risks, and expected benefits."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college creates a schedule showing the sequence of activities, milestones, timelines, responsible parties, and major deliverables. Which component is being prepared?",
+            a: "Implementation Roadmap",
+            exp: "The implementation roadmap shows the sequence, timelines, milestones, responsibilities, and major deliverables."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A government office identifies the financial, human, technological, and operational resources required to carry out its information strategy. Which component is being developed?",
+            a: "Budget and Resource Plan",
+            exp: "The Budget and Resource Plan identifies the resources needed to implement the information strategy."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university defines KPIs, benchmarks, targets, reporting mechanisms, review schedules, and corrective actions to monitor its strategic initiatives. Which component is this?",
+            a: "Performance Measurement",
+            exp: "Performance Measurement defines how strategic initiatives will be monitored and evaluated using KPIs, targets, benchmarks, and corrective actions."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A college has identified slow transactions, duplicate records, and inconsistent information. The team selects an integrated student information environment as a higher priority than unrelated technology requests because it directly affects student services and institutional reporting. Which stage of the strategic planning cycle is being demonstrated?",
+            a: "Prioritize and Sequence Initiatives",
+            exp: "The team prioritizes initiatives based on their importance and impact on organizational needs and goals."
+        },
+        {
+            topic: "l1",
+            label: "Information Strategic Planning",
+            q: "A university implements its information initiatives, monitors KPIs such as processing time, data error rate, system availability, user satisfaction, and security incidents, and then revises its plan when conditions require changes. Which stages of the strategic planning cycle are being demonstrated?",
+            a: "Implement and Manage Change → Measure and Evaluate → Update the Strategic Plan",
+            exp: "The cycle involves implementing the initiatives, measuring and evaluating results, and updating the strategic plan when changes are needed."
+        }
+    ];
+
+        let baseSet = [...qBank];
+        let flashcardSet = [...baseSet];
+        let quizSet = [];
+        let missedQuestions = [];
+
+        let currentIndex = 0;
+        let isQuizMode = false;
+        let quizScore = 0;
+        let quizAttempted = false;
+        let isFlipped = false;
+
+        if (window.innerWidth > 768) { document.getElementById('desktop-hints').style.display = 'block'; }
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function updateProgress() {
+            const tracker = document.getElementById('progress-tracker');
+            const bar = document.getElementById('progress-bar');
+            let total = isQuizMode ? quizSet.length : flashcardSet.length;
+            let current = currentIndex + 1;
+
+            if (current > total) current = total;
+            if (total === 0) total = 1;
+
+            let percent = (current / total) * 100;
+            bar.style.width = `${percent}%`;
+
+            if (isQuizMode) {
+                tracker.innerText = `Question ${current} of ${total} | Score: ${quizScore}`;
+            } else {
+                tracker.innerText = `Card ${current} of ${total}`;
+            }
+        }
+
+        // --- NAVIGATION ---
+        function setTopic(topic) {
+            const buttons = document.querySelectorAll('#topic-buttons button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (topic === 'all') baseSet = [...qBank];
+            else baseSet = qBank.filter(q => q.topic === topic);
+
+            flashcardSet = [...baseSet];
+
+            if (isQuizMode) startQuiz();
+            else { currentIndex = 0; renderFlashcard(); }
+        }
+
+        function setMode(mode) {
+            const fcBtn = document.getElementById('btn-flashcards');
+            const quizBtn = document.getElementById('btn-quiz');
+            const fcView = document.getElementById('flashcard-view');
+            const quizView = document.getElementById('quiz-view');
+
+            if (mode === 'flashcard') {
+                isQuizMode = false;
+                fcBtn.classList.add('active'); quizBtn.classList.remove('active');
+                fcView.style.display = 'block'; quizView.style.display = 'none';
+                currentIndex = 0;
+                renderFlashcard();
+            } else {
+                isQuizMode = true;
+                quizBtn.classList.add('active'); fcBtn.classList.remove('active');
+                fcView.style.display = 'none'; quizView.style.display = 'block';
+                startQuiz();
+            }
+        }
+
+        // --- FLASHCARDS ---
+        function renderFlashcard() {
+                const fc = document.getElementById('flashcard');
+
+                isFlipped = false;
+                fc.classList.remove('flipped');
+
+                setTimeout(() => {
+                    if (flashcardSet.length === 0) return;
+
+                    const currentCard = flashcardSet[currentIndex];
+
+                    document.getElementById('fc-question').innerText = currentCard.q;
+                    document.getElementById('fc-answer').innerText = currentCard.a;
+                    document.getElementById('fc-topic-front').innerText = currentCard.label;
+                    document.getElementById('fc-topic-back').innerText = currentCard.label;
+
+                    updateProgress();
+                }, 150);
+            }
+
+        function flipCard() { isFlipped = !isFlipped; document.getElementById('flashcard').classList.toggle('flipped', isFlipped);
+            }
+        function nextCard() { if (currentIndex < flashcardSet.length - 1) { currentIndex++; isFlipped = false; renderFlashcard();}
+        }
+        function prevCard() { if (currentIndex > 0) { currentIndex--; isFlipped = false; renderFlashcard();}
+        }
+
+        // --- QUIZ LOGIC ---
+        function startQuiz() {
+            quizSet = shuffle([...baseSet]);
+            missedQuestions = [];
+            currentIndex = 0;
+            quizScore = 0;
+
+            document.getElementById('quiz-active-area').style.display = 'block';
+            document.getElementById('quiz-results').style.display = 'none';
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+                if (currentIndex >= quizSet.length) {
+                    showQuizResults();
+                    return;
+                }
+
+                quizAttempted = false;
+
+                const currentQ = quizSet[currentIndex];
+
+                document.getElementById('quiz-topic-label').innerText = currentQ.label;
+                document.getElementById('quiz-question').innerText = currentQ.q;
+                document.getElementById('quiz-feedback').innerText = '';
+                document.getElementById('quiz-next-btn').style.display = 'none';
+                document.getElementById('explanation-box').style.display = 'none';
+
+                const input = document.getElementById('quiz-answer-input');
+                const submitBtn = document.getElementById('quiz-submit-btn');
+
+                input.value = '';
+                input.disabled = false;
+                input.classList.remove('correct-input', 'wrong-input');
+
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Submit Answer';
+
+                updateProgress();
+
+                setTimeout(() => {
+                    input.focus();
+                }, 100);
+            }
+
+            function submitQuizAnswer() {
+                    if (quizAttempted) return;
+
+                    const input = document.getElementById('quiz-answer-input');
+                    const submitBtn = document.getElementById('quiz-submit-btn');
+                    const selected = input.value.trim();
+
+                    if (selected === '') {
+                        document.getElementById('quiz-feedback').innerText = "Please enter your answer.";
+                        document.getElementById('quiz-feedback').style.color = "var(--incorrect)";
+                        input.focus();
+                        return;
+                    }
+
+                    quizAttempted = true;
+
+                    const currentQ = quizSet[currentIndex];
+
+                    // Ignore capitalization and extra spaces
+                    const userAnswer = selected.toLowerCase().replace(/\s+/g, ' ').trim();
+                    const correctAnswer = currentQ.a.toLowerCase().replace(/\s+/g, ' ').trim();
+
+                    const expBox = document.getElementById('explanation-box');
+                    const expText = document.getElementById('exp-text');
+
+                    input.disabled = true;
+                    submitBtn.disabled = true;
+
+                    if (userAnswer === correctAnswer) {
+
+                        input.classList.add('correct-input');
+
+                        document.getElementById('quiz-feedback').innerText = "Correct! 🎉";
+                        document.getElementById('quiz-feedback').style.color = "var(--correct)";
+
+                        quizScore++;
+
+                    } else {
+
+                        input.classList.add('wrong-input');
+
+                        document.getElementById('quiz-feedback').innerText =
+                            `Incorrect. Correct answer: ${currentQ.a}`;
+
+                        document.getElementById('quiz-feedback').style.color =
+                            "var(--incorrect)";
+
+                        expText.innerText = currentQ.exp;
+                        expBox.style.display = 'block';
+
+                        missedQuestions.push(currentQ);
+                    }
+
+                    document.getElementById('quiz-next-btn').style.display = 'block';
+
+                    updateProgress();
+                }
+
+        function nextQuizQuestion() { currentIndex++; renderQuizQuestion(); }
+
+        function showQuizResults() {
+            document.getElementById('quiz-active-area').style.display = 'none';
+            document.getElementById('quiz-results').style.display = 'block';
+
+            let percentage = Math.round((quizScore / quizSet.length) * 100);
+            document.getElementById('final-score-text').innerHTML = `You scored ${quizScore} out of ${quizSet.length} <br><span style='font-size:32px; color:var(--primary); margin-top:10px; display:block;'>${percentage}%</span>`;
+
+            document.getElementById('progress-bar').style.width = '100%';
+            document.getElementById('progress-tracker').innerText = "Quiz Complete";
+
+            const missedContainer = document.getElementById('missed-container');
+            const missedList = document.getElementById('missed-list');
+
+            if (missedQuestions.length > 0) {
+                missedContainer.style.display = 'block';
+                missedList.innerHTML = '';
+                missedQuestions.forEach(q => {
+                    missedList.innerHTML += `<div class="missed-item">
+                        <strong>Q: ${q.q}</strong><br>
+                        <span style="color:var(--correct)">✔ Correct Answer: ${q.a}</span><br>
+                        <span style="color:var(--text-light); font-size:13px;"><i>Why? ${q.exp}</i></span>
+                    </div>`;
+                });
+            } else {
+                missedContainer.style.display = 'none';
+            }
+        }
+
+        // --- KEYBOARD SHORTCUTS ---
+            document.addEventListener('keydown', (e) => {
+                if (!isQuizMode) {
+                    // FLASHCARD MODE
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        flipCard();
+                    }
+                    else if (e.code === 'ArrowUp') {
+                        e.preventDefault();
+
+                        // Up Arrow = Reveal Answer
+                        if (!isFlipped) {
+                            flipCard();
+                        }
+                    }
+                    else if (e.code === 'ArrowDown') {
+                        e.preventDefault();
+
+                        // Down Arrow = Flip Back
+                        if (isFlipped) {
+                            flipCard();
+                        }
+                    }
+                    else if (e.code === 'ArrowRight') {
+                        e.preventDefault();
+                        nextCard();
+                    }
+                    else if (e.code === 'ArrowLeft') {
+                        e.preventDefault();
+                        prevCard();
+                    }
+
+                } else {
+                    // QUIZ MODE
+
+                    // Enter = Submit Answer / Next Question
+                    if (e.code === 'Enter') {
+                        e.preventDefault();
+
+                        if (!quizAttempted) {
+                            submitQuizAnswer();
+                        }
+                        else if (
+                            document.getElementById('quiz-next-btn').style.display === 'block'
+                        ) {
+                            nextQuizQuestion();
+                        }
+                    }
+
+                    // Right Arrow = Next Question
+                    else if (e.code === 'ArrowRight') {
+                        e.preventDefault();
+
+                        if (
+                            quizAttempted &&
+                            document.getElementById('quiz-next-btn').style.display === 'block'
+                        ) {
+                            nextQuizQuestion();
+                        }
+                    }
+                }
+            });
+
+        // Init
+        renderFlashcard();
+    </script>
+</body>
+
+</html>
